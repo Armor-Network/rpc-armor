@@ -7,9 +7,9 @@
 * /_/   \_\ |_| \_\ |_|  |_|  \___/  |_| \_\   |_| \_| |_____|   |_|
 *
 *
-*	ARMOR NETWORK
-*	A fast, easy and anonymous payment system.
-*	https://armornetwork.org
+*    ARMOR NETWORK
+*    A fast, easy and anonymous payment system.
+*    https://armornetwork.org
 *
 **/
 
@@ -147,7 +147,7 @@ function rpcWallet(method, params, callback){
 var getblockheaderbyheight = function(h,callback){
   rpcWallet('getblockheaderbyheight', { height: h } , function (error, result) {
     if (error || !result) {
-			callback(true, result || {})
+            callback(true, result || {})
       return;
     }
     callback(false, result)
@@ -157,7 +157,7 @@ var getblockheaderbyheight = function(h,callback){
 var get_addresses = function(callback){
     rpcWallet('get_addresses', {} , function (error, result) {
       if (error || !result) {
-  			callback(true, result || {})
+              callback(true, result || {})
         return;
       }
       callback(false, result)
@@ -167,7 +167,7 @@ var get_addresses = function(callback){
 var get_balance = function(params, callback){
     rpcWallet('get_balance', params , function (error, result) {
       if (error || !result) {
-  			callback(true, result || {})
+              callback(true, result || {})
         return;
       }
       callback(false, result)
@@ -177,7 +177,7 @@ var get_balance = function(params, callback){
 var get_status = function(callback){
     rpcWallet('get_status', {} , function (error, result) {
       if (error || !result) {
-  			callback(true, result || {})
+              callback(true, result || {})
         return;
       }
       callback(false, result)
@@ -197,10 +197,10 @@ var create_addresses = function(params, callback){
 function createTransaction(command, callback) {
   rpcWallet('create_transaction', command.rpc, function (error, result) {
     if (error || !result) {
-  		if(result.error)
+          if(result.error)
         callback(true,result.error.message || result);
-  		else
-  			callback(true,result || {});
+          else
+              callback(true,result || {});
         return;
     }
     command.tx.binary_transaction = result.binary_transaction;
@@ -258,16 +258,16 @@ function submit(cb) {
 
   async.waterfall([
     function (callback) {
-		  if(paranoid_check){
-			  callback(true, "Error paranoid_check");
-			  return;
-		  }
-		  paranoid_check = true;
+          if(paranoid_check){
+              callback(true, "Error paranoid_check");
+              return;
+          }
+          paranoid_check = true;
       createTransaction(transferCommand, function (error, result) {
         if (error || !result) {
-  				console.log(result);
-  			  paranoid_check = false;
-  			  callback(true, result);
+                  console.log(result);
+                paranoid_check = false;
+                callback(true, result);
           return;
         }
         callback(null,result);
@@ -278,12 +278,12 @@ function submit(cb) {
         if (error || !result) {
           console.log("Error sendTransaction");
           if(result)
-  			    console.log(result);
+                  console.log(result);
             callback(true, result);
             return;
           }
-			  console.log(transferCommand.hash);
-			  paranoid_check = false;
+              console.log(transferCommand.hash);
+              paranoid_check = false;
         callback(null, result);
       })
     }
@@ -291,8 +291,8 @@ function submit(cb) {
         if (error) {
           console.log(`\x1b[31mError ${error}\x1b[0m`);
         }else{
-			    console.log("\x1b[1m\x1b[32mSent!");
-		    }
+                console.log("\x1b[1m\x1b[32mSent!");
+            }
         cb(error,result);
     });
 } // submit
@@ -303,25 +303,25 @@ function run() {
   console.log("\n" + ascii_text_generator("Network","2"));
   console.log("\nA fast, easy and anonymous payment system."
               + "\nhttps://armornetwork.org\n");
-
+  
   readConfFile("./config.json", function(config) {
     port = config.walletd.port;
     host = config.walletd.host;
     httpPassword = config.walletd.httpPassword;
-
-    var queries = ["See balance", "My addresses", "Send transaction", "Get status", "Create address", "Exit"];
-
+    
+    var queries = ["See balance", "My addresses", "Send transaction", "Optimize address", "Get status", "Create address", "Exit"];
+    
     const ask = () => {
-
+    
       var addresses;
-
+    
       get_addresses(function(error, result) {
         if(error){
           console.log(`\x1b[31merror ${result}\x1b[0m`);
           return;
         }
         addresses = result.addresses;
-
+        
         inquirer.prompt([
         {
           name: 'query',
@@ -396,21 +396,47 @@ function run() {
                     optimization = answers.optimisation;
                     amount = parseInt(answers.amount);
                     mixin = parseInt(answers.anonymity);
-
+                    
                     console.log(`\n\x1b[1m\x1b[32mDestination address: ${answers.destination}
                       Source address: ${answers.spend}
                       Anonymity: ${mixin}
                       Optimisation: ${optimization}
                       Amount: ${amount}[atomic units] => ${(amount/100000000).toFixed(8)}[AMX]\n`);
-
+                    
                     inquirer.prompt([{
                       name: 'submit',
                       type: 'confirm',
                       message: 'Submit?',
                       }]).then((ans) => {
                         if(ans.submit) {
-                          submit(function(error,result){
-                            ask();
+                            submit(function(error,result){
+                                console.log('Try to send amount', amount);
+                                
+                                if(error === true){
+                                    console.log('FAIL! error ', error, 'result', result);//, 'ans: ', ans, 'answers', answers);
+                                    
+                                    if(result.indexOf('Transaction with desired amount is too big (cannot fit in block).') !== -1){
+                                        console.log('You can try to optimize spend_address: ', spend_address);
+                                        /*
+                                        var NewAmount = Number(Number(result.split('(')[2].split(' ')[0].split("'").join(''), 10).toFixed(8).split('.').join(''));
+                                        console.log('Try optimize wallet, with NewAmount: ', NewAmount);
+                                        amount = answers.amount = NewAmount.toString(10);
+                                        submit(function(error2,result2){
+                                            console.log('optimize transfer sent, with amount NewAmount: ', NewAmount);
+                                            ask();
+                                        });
+                                        */
+                                    }
+                                    else{
+                                        console.log('FAIL! error ', error, 'result', result);//, 'ans: ', ans, 'answers', answers);
+                                        ask();
+                                    }
+                                
+                                }
+                                else{
+                                    console.log('SUCCESS!');
+                                    ask();
+                                }
                           });
                         } else {
                           console.log("Cancelled!");
@@ -418,7 +444,104 @@ function run() {
                         }
                       })
                   })
-            } else if(answers.query == queries[3]) {
+            } else if (answers.query == queries[3]){
+                //console.log('Try to optimize address: ', addresses);
+                addresses.push("all")
+                inquirer.prompt([
+                {
+                    name: 'address',
+                    type: 'list',
+                    message: 'What address? [all for all addresses]',
+                    choices: addresses,
+                    default: "all",
+                }]).then((answers) => {
+                    get_balance(answers.address == "all" ? {} : { address: answers.address },function(error, result){
+                        if(error){
+                            console.log(`\x1b[31merror ${result}\x1b[0m`);
+                        } else {
+                            console.log(`
+                    Spendable: ${result.spendable}[atomic units] => ${(result.spendable/100000000).toFixed(8)}[AMX]
+                    Spendable dust: ${result.spendable_dust}[atomic units] => ${(result.spendable_dust/100000000).toFixed(8)}[AMX]
+                    Locked or unconfirmed: ${result.locked_or_unconfirmed}[atomic units] => ${(result.locked_or_unconfirmed/100000000).toFixed(8)}[AMX]`);
+                            console.log(`\x1b[2m
+                    Spendable outputs: ${result.spendable_outputs}
+                    Spendable dust outputs: ${result.spendable_dust_outputs}
+                    Locked or unconfirmed outputs: ${result.locked_or_unconfirmed_outputs}\x1b[0m`);
+                            console.log('result.spendable', result.spendable);
+                            
+                            if(result.spendable > 0){
+                                //add params
+                                answers["destination"]  = answers.address;
+                                answers["spend"]        = answers.address;
+                                answers["anonymity"]    = 0;
+                                answers["optimisation"] = 'aggressive';
+                                answers["amount"]       = '0';
+                                
+                                //save old value of global variables:
+                                var old_fee_per_byte        = fee_per_byte;
+                                var old_paranoid_check      = paranoid_check;
+                                var old_mixin               = mixin;
+                                var old_destination_address = destination_address;
+                                var old_spend_address       = spend_address;
+                                var old_change_address      = change_address;
+                                var old_amount              = amount;                  //atomic units
+                                var old_any_spend_address   = any_spend_address;
+                                
+                                //set another values, for optimization:
+                                spend_address = change_address = destination_address = answers.address;
+                                optimization = 'aggressive';
+                                fee_per_byte = 0;
+                                paranoid_check = false;
+                                mixin = 0;
+                                amount = answers.amount = result.spendable;
+                                any_spend_address = false;
+                                
+                                submit(function(error,result){
+                                    console.log('Try to send all amount', amount);
+                                    if(error === true){
+                                        console.log('FAIL! error: ', error, 'result', result);
+                                        if(result.indexOf('Transaction with desired amount is too big (cannot fit in block).') !== -1){
+                                            var NewAmount = Number(Number(result.split('(')[2].split(' ')[0].split("'").join(''), 10).toFixed(8).split('.').join(''));
+                                            console.log('Try optimize wallet, with NewAmount: ', NewAmount);
+                                            
+                                            amount = answers.amount = NewAmount.toString(10);
+                                            
+                                            submit(function(error2,result2){
+                                                console.log('optimize transfer sent, with amount NewAmount: ', NewAmount);
+                                                ask();
+                                            });
+                                        }
+                                    }else{
+                                        console.log('SUCCESS!');
+                                        
+                                        //turn back old values of global variables.
+                                        fee_per_byte        = old_fee_per_byte;
+                                        paranoid_check      = old_paranoid_check;
+                                        mixin               = old_mixin;
+                                        destination_address = old_destination_address;
+                                        spend_address       = old_spend_address;
+                                        change_address      = old_change_address;
+                                        amount              = old_amount;                  //atomic units
+                                        any_spend_address   = old_any_spend_address;
+                                        
+                                        ask();
+                                    }
+                                });                            
+                            }
+                            else{
+                                console.log('Nothing to optimize - spendable amount: ', result.spendable);
+                                ask();
+                            }
+                            
+                            
+                            
+                        }
+                    })
+                })
+                
+                
+                //ask();
+            } else if(answers.query == queries[4]) {
               get_status(function(error, result){
                 if(error){
                   console.log(`\x1b[31mError ${result}\x1b[0m`);
@@ -427,7 +550,7 @@ function run() {
                 }
                 ask();
               })
-            } else if(answers.query == queries[4]) {
+            } else if(answers.query == queries[5]) {
               create_addresses({secret_spend_keys: [""]},function(error, result){
                 if(error){
                   console.log(`\x1b[31mError ${result}\x1b[0m`);
@@ -436,7 +559,7 @@ function run() {
                 }
                 ask();
               })
-            } else if(answers.query == queries[5]) {
+            } else if(answers.query == queries[6]) {
                 process.exit(0);
             } else {
               console.log(`\x1b[31mError\x1b[0m`);
