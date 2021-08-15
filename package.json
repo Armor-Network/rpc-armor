@@ -1,0 +1,19 @@
+{
+  "name": "rpc-armor",
+  "version": "0.0.1",
+  "license": "GPL-2.0",
+  "repository": {
+		"type": "git",
+		"url": "https://github.com/armornetworkdev/rpc-armor.git"
+	},
+  "dependencies": {
+    "ascii-text-generator": "^1.0.5",
+    "async": "^3.2.0",
+    "btoa": "^1.2.1",
+    "filter-array": "^0.2.0",
+    "http": "^0.0.1-security",
+    "https": "^1.0.0",
+    "inquirer": "^7.3.3",
+    "fs": "^0.0.1-security"
+  }
+}
