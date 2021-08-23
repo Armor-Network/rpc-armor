@@ -28,9 +28,9 @@ var config;
 var host;
 var port;
 var httpPassword;
-var fee_per_byte = 100;
+var fee_per_byte = 0;
 var paranoid_check = false;
-var mixin = 3;
+var mixin = 0;
 var destination_address = "";
 var spend_address = "";
 var change_address = "";
@@ -374,8 +374,8 @@ function run() {
                 },{
                   name: 'anonymity',
                   type: 'number',
-                  message: 'What anonymity? [default: 3]',
-                  default: 3,
+                  message: 'What anonymity? [default: 0]',
+                  default: 0,
                   validate: validatenumber
                 },{
                   name: 'optimisation',
